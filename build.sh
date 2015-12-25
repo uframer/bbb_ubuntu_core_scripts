@@ -31,7 +31,7 @@ linux_builder_script=linux_builder_script
 git clone https://github.com/uframer/armv7-multiplatform.git ${linux_builder_script}
 # Checkout v4.3.x branch
 cd ${linux_builder_script}
-git checkout v4.3.x -b build
+git checkout remotes/origin/v4.3.x -b build
 ./build_kernel.sh
 
 cd {root_dir}
