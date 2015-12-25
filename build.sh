@@ -25,6 +25,14 @@ git clone https://github.com/uframer/Bootloader-Builder.git ${uboot_builder_scri
 cd ${uboot_builder_script}
 ./build.sh am335x_boneblack_flasher
 
+# Clone Linus's Linux kernel repository
+torvalds_linux="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git"
+local_linux_source="${HOME}/linux-src/"
+if [ ! -f "${local_linux_source}/.git/config" ] ; then
+    rm -rf ${local_linux_source}
+    git clone ${torvalds_linux} ${local_linux_source}
+fi
+
 # Use my fork from Robert Nelson's script to build Linux kernel
 cd ${target_dir}
 linux_builder_script=linux_builder_script
@@ -32,6 +40,6 @@ git clone https://github.com/uframer/armv7-multiplatform.git ${linux_builder_scr
 # Checkout v4.3.x branch
 cd ${linux_builder_script}
 git checkout remotes/origin/v4.3.x -b build
-AUTO_BUILD=1 ./build_kernel.sh
+AUTO_BUILD=1 LINUX_GIT="${local_linux_source}" ./build_kernel.sh
 
 cd {root_dir}
