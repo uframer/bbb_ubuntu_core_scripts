@@ -42,4 +42,4 @@ cd ${linux_builder_script}
 git checkout remotes/origin/v4.3.x -b build
 AUTO_BUILD=1 LINUX_GIT="${local_linux_source}" ./build_kernel.sh
 
-cd {root_dir}
+cd ${root_dir}
