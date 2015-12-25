@@ -25,7 +25,7 @@ git clone https://github.com/uframer/Bootloader-Builder.git ${uboot_builder_scri
 cd ${uboot_builder_script}
 ./build.sh am335x_boneblack_flasher
 
-# User Robert Nelson's script to build Linux kernel
+# Use my fork from Robert Nelson's script to build Linux kernel
 cd ${target_dir}
 linux_builder_script=linux_builder_script
 git clone https://github.com/uframer/armv7-multiplatform.git ${linux_builder_script}
