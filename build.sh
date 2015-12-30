@@ -140,11 +140,24 @@ sudo blockdev --flushbufs ${target_device}
 
 ## Mount target device
 sudo mount ${target_device}1 /mnt
+# Install u-boot
 sudo mkdir -p /mnt/boot
 sudo cp -v ${target_dir}/MLO /mnt/boot/
 sudo cp -v ${target_dir}/u-boot.img /mnt/boot/
 # TODO setup uEnv.txt
 sudo sh -c "echo 'uname_r=${kernel_version}' >> /mnt/boot/uEnv.txt"
+# Install Linux kernel
+sudo cp -v ${target_dir}/${linux_builder_script}/deploy/${kernel_version}.zImage /mnt/boot/vmlinuz-${kernel_version}
+# Install Device Tree
+sudo mkdir -p /mnt/boot/dtbs/${kernel_version}/
+sudo tar xfv ${target_dir}/${linux_builder_script}/deploy/${kernel_version}-dtbs.tar.gz -C /mnt/boot/dtbs/${kernel_version}/
+# Install kernel modules
+sudo tar xfv ${target_dir}/${linux_builder_script}/deploy/${kernel_version}-modules.tar.gz -C /mnt/
+# Install Ubuntu Core rootfs
 sudo tar zxvpf ${target_dir}/${ubuntu_core_dir}/${rootfs_archive} -C /mnt
+# Setup fstab
+sudo sh -c "echo '/dev/mmcblk0p1  /  auto  errors=remount-ro  0  1' >> /mnt/etc/fstab"
+# Setup serial
+sudo cp -v ${root_dir}/serial.conf /mnt/etc/init/serial.conf
 
 cd ${root_dir}
