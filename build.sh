@@ -138,7 +138,7 @@ if [ $? != "0" ] ; then
     exit 1
 fi
 
-sudo mkfs.ext4 ${target_device}1 -L PiggyString
+sudo mkfs.ext4 ${target_device}1 -L PiggySting
 
 sudo umount ${target_device}1
 
