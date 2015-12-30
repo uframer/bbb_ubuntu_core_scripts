@@ -21,8 +21,14 @@ target_dir=$PWD
 # Use my fork from Robert Nelson's script to build u-boot
 cd ${target_dir}
 uboot_builder_script=uboot_builder_script
-git clone https://github.com/uframer/Bootloader-Builder.git ${uboot_builder_script}
-cd ${uboot_builder_script}
+if [ -d ${uboot_builder_script} ] ; then
+    cd ${uboot_builder_script}
+    git pull
+else
+    git clone https://github.com/uframer/Bootloader-Builder.git ${uboot_builder_script}
+    cd ${uboot_builder_script}
+fi
+
 need_rebuild_uboot=0
 if [ ! -f deploy/am335x_boneblack/MLO-am335x_boneblack-v2015.10-r12 ] ; then
     need_rebuild_uboot=1
@@ -66,9 +72,6 @@ if [ -f kernel_version ] ; then
         need_rebuild_linux=1
     fi
     if [ ! -f deploy/${kernel_version}-dtbs.tar.gz ] ; then
-        need_rebuild_linux=1
-    fi
-    if [ ! -f deploy/${kernel_version}-firmware.tar.gz ] ; then
         need_rebuild_linux=1
     fi
     if [ ! -f deploy/${kernel_version}-modules.tar.gz ] ; then
