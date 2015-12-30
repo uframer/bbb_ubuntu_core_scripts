@@ -133,7 +133,6 @@ fi
 # Make the entire disk a Linux partition
 sudo sfdisk --in-order --Linux --unit M ${target_device} <<-__EOF__
 1,,L,*
-;
 __EOF__
 
 if [ $? != "0" ] ; then
@@ -172,6 +171,18 @@ sudo sh -c "echo '/dev/mmcblk0p1  /  auto  errors=remount-ro  0  1' >> /mnt/etc/
 # Setup serial
 sudo cp -v ${root_dir}/serial.conf /mnt/etc/init/serial.conf
 
+# Add user
+target_user=piggysting
+#sudo groupadd -R /mnt ${target_user} || echo "failed to add group ${target_user}"
+#sudo useradd -R /mnt -s '/bin/bash' -m -G ${target_user},adm,sudo ${target_user}
+#sudo useradd -R /mnt -s '/bin/bash' -m ${target_user}
+#echo "Set password for ${target_user}:"
+#sudo passwd -R /mnt ${target_user}
+#echo "Set password for root:"
+#sudo passwd -R /mnt root
+sudo cp -v /usr/bin/qemu-arm-static /mnt/usr/bin/
+sudo LC_ALL=C chroot /mnt /bin/bash -c "useradd -s '/bin/bash' -m -G adm,sudo ${target_user};echo \"Set password for ${target_user}:\";passwd ${target_user};echo \"Set password for root:\";passwd root"
+sudo rm /mnt/usr/bin/qemu-arm-static
 sudo umount /mnt
 
 cd ${root_dir}
