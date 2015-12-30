@@ -23,7 +23,16 @@ cd ${target_dir}
 uboot_builder_script=uboot_builder_script
 git clone https://github.com/uframer/Bootloader-Builder.git ${uboot_builder_script}
 cd ${uboot_builder_script}
-./build.sh am335x_boneblack_flasher
+need_rebuild_uboot=0
+if [ ! -f deploy/am335x_boneblack/MLO-am335x_boneblack-v2015.10-r12 ] ; then
+    need_rebuild_uboot=1
+fi
+if [ ! -f deploy/am335x_boneblack/u-boot-am335x_boneblack-v2015.10-r12.img ] ; then
+    need_rebuild_uboot=1
+fi
+if [ ${need_rebuild_uboot} == "1" ] ; then
+    ./build.sh am335x_boneblack_flasher
+fi
 cp -f deploy/am335x_boneblack/MLO-am335x_boneblack-v2015.10-r12 ${target_dir}/MLO
 cp -f deploy/am335x_boneblack/u-boot-am335x_boneblack-v2015.10-r12.img ${target_dir}/u-boot.img
 
@@ -50,20 +59,25 @@ fi
 git branch -d build
 git checkout remotes/origin/v4.3.x -b build
 
-need_rebuild_linux=0
-if [ ! -f deploy/4.3.3-armv7-x1.zImage ] ; then
-    need_rebuild_linux=1
-fi
-if [ ! -f deploy/4.3.3-armv7-x1-dtbs.tar.gz ] ; then
-    need_rebuild_linux=1
-fi
-if [ ! -f deploy/4.3.3-armv7-x1-firmware.tar.gz ] ; then
-    need_rebuild_linux=1
-fi
-if [ ! -f deploy/4.3.3-armv7-x1-modules.tar.gz ] ; then
-    need_rebuild_linux=1
-fi
-if [ ! -f deploy/config-4.3.3-armv7-x1 ] ; then
+if [ -f kernel_version ] ; then
+    kernel_version=`cat kernel_version`
+    need_rebuild_linux=0
+    if [ ! -f deploy/${kernel_version}.zImage ] ; then
+        need_rebuild_linux=1
+    fi
+    if [ ! -f deploy/${kernel_version}-dtbs.tar.gz ] ; then
+        need_rebuild_linux=1
+    fi
+    if [ ! -f deploy/${kernel_version}-firmware.tar.gz ] ; then
+        need_rebuild_linux=1
+    fi
+    if [ ! -f deploy/${kernel_version}-modules.tar.gz ] ; then
+        need_rebuild_linux=1
+    fi
+    if [ ! -f deploy/config-${kernel_version} ] ; then
+        need_rebuild_linux=1
+    fi
+else
     need_rebuild_linux=1
 fi
 
@@ -74,11 +88,6 @@ else
   echo "Linux kernel was built before, skip this phase"
 fi
 
-cp -f deploy/4.3.3-armv7-x1.zImage ${target_dir}/
-cp -f deploy/4.3.3-armv7-x1-dtbs.tar.gz ${target_dir}/
-cp -f deploy/4.3.3-armv7-x1-firmware.tar.gz ${target_dir}/
-cp -f deploy/4.3.3-armv7-x1-modules.tar.gz ${target_dir}/
-cp -f deploy/config-4.3.3-armv7-x1 ${target_dir}/
 unset kernel_version
 kernel_version=`cat kernel_version`
 echo "kernel_version=${kernel_version}"
@@ -159,5 +168,7 @@ sudo tar zxvpf ${target_dir}/${ubuntu_core_dir}/${rootfs_archive} -C /mnt
 sudo sh -c "echo '/dev/mmcblk0p1  /  auto  errors=remount-ro  0  1' >> /mnt/etc/fstab"
 # Setup serial
 sudo cp -v ${root_dir}/serial.conf /mnt/etc/init/serial.conf
+
+sudo umount /mnt
 
 cd ${root_dir}
