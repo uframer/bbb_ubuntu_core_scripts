@@ -159,6 +159,8 @@ sudo cp -v ${target_dir}/u-boot.img /mnt/boot/
 sudo sh -c "echo 'uname_r=${kernel_version}' >> /mnt/boot/uEnv.txt"
 # Install Linux kernel
 sudo cp -v ${target_dir}/${linux_builder_script}/deploy/${kernel_version}.zImage /mnt/boot/vmlinuz-${kernel_version}
+# Save kernel config file
+sudo cp -v ${target_dir}/${linux_builder_script}/deploy/config-${kernel_version} /mnt/boot/
 # Install Device Tree
 sudo mkdir -p /mnt/boot/dtbs/${kernel_version}/
 sudo tar xfv ${target_dir}/${linux_builder_script}/deploy/${kernel_version}-dtbs.tar.gz -C /mnt/boot/dtbs/${kernel_version}/
