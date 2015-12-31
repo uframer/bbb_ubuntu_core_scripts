@@ -156,6 +156,19 @@ sudo mkdir -p /mnt/boot
 sudo cp -v ${target_dir}/MLO /mnt/boot/
 sudo cp -v ${target_dir}/u-boot.img /mnt/boot/
 # TODO setup uEnv.txt
+# With u-boot v2014.07 and the corresponding patches from Robert Nelson, each partition
+# of the SD card will be searched for an environment file under /boot/uEnv.txt. If an
+# uEnv.txt file is found, its contents are imported.
+# The name of a dtb file may be set with the variable 'dtb' within the uEnv.txt file.
+#
+# Furthermore, if 'uname_r' is specified, a compressed kernel binary (zImage) is
+# assumed to be in /boot/vmlinuz-{uname_r}, and 'run uname_boot' is executed, at the
+# end of which 'run mmcargs' is executed.
+#
+# Therefore, if you want to completely override the boot process, you would need
+# to override 'uname_boot' within this file.
+#
+# The boot command is defined in include/configs/am335x_evm.h's CONFIG_BOOTCOMMAND
 sudo sh -c "echo 'uname_r=${kernel_version}' >> /mnt/boot/uEnv.txt"
 # Install Linux kernel
 sudo cp -v ${target_dir}/${linux_builder_script}/deploy/${kernel_version}.zImage /mnt/boot/vmlinuz-${kernel_version}
