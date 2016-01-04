@@ -24,7 +24,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
   bash-completion \
   kmod \
   linux-firmware \
-  vim
+  emacs24-nox
 
 # Setup hostname
 echo 'station001.piggysting' > /etc/hostname
