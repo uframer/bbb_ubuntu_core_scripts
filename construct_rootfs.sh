@@ -26,8 +26,6 @@ DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
   linux-firmware \
   emacs24-nox
 
-# Setup hostname
-echo 'station001.piggysting' > /etc/hostname
 dpkg-reconfigure resolvconf
 dpkg-reconfigure tzdata
 
