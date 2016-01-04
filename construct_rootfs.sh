@@ -30,4 +30,9 @@ DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
 dpkg-reconfigure resolvconf
 dpkg-reconfigure tzdata
 
+# Setup hosts
+echo "station001.piggysting" > /etc/hostname
+echo "127.0.0.1    localhost" > /etc/hosts
+echo "127.0.0.1    station001.piggysting" >> /etc/hosts
+
 exit
