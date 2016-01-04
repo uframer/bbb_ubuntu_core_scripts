@@ -23,7 +23,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
   rsyslog \
   bash-completion \
   kmod \
-  linux-firmware
+  linux-firmware \
+  vim
 
 # Setup hostname
 echo 'station001.piggysting' > /etc/hostname
