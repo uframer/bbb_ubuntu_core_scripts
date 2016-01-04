@@ -181,23 +181,33 @@ sudo tar xfv ${target_dir}/${linux_builder_script}/deploy/${kernel_version}-dtbs
 sudo tar xfv ${target_dir}/${linux_builder_script}/deploy/${kernel_version}-modules.tar.gz -C /mnt/
 # Install Ubuntu Core rootfs
 sudo tar zxvpf ${target_dir}/${ubuntu_core_dir}/${rootfs_archive} -C /mnt
-# Setup fstab
+# Configure fstab
 sudo sh -c "echo '/dev/mmcblk0p1  /  auto  errors=remount-ro  0  1' >> /mnt/etc/fstab"
-# Setup serial
+# Configure serial
 sudo cp -v ${root_dir}/serial.conf /mnt/etc/init/serial.conf
-
-# Add user
-target_user=piggysting
-#sudo groupadd -R /mnt ${target_user} || echo "failed to add group ${target_user}"
-#sudo useradd -R /mnt -s '/bin/bash' -m -G ${target_user},adm,sudo ${target_user}
-#sudo useradd -R /mnt -s '/bin/bash' -m ${target_user}
-#echo "Set password for ${target_user}:"
-#sudo passwd -R /mnt ${target_user}
-#echo "Set password for root:"
-#sudo passwd -R /mnt root
+# Configure network interfaces
+#sudo cp -v ${root_dir}/interfaces /mnt/etc/network/
+# We need qemu-arm-static to run armhf rootfs via binfmt_misc
 sudo cp -v /usr/bin/qemu-arm-static /mnt/usr/bin/
-sudo LC_ALL=C chroot /mnt /bin/bash -c "useradd -s '/bin/bash' -m -G adm,sudo ${target_user};echo \"Set password for ${target_user}:\";passwd ${target_user};echo \"Set password for root:\";passwd root"
+# Copy host's dns configuration to target
+sudo cp -b /etc/resolv.conf /mnt/etc/resolv.conf
+# Prepare scripts to run in chroot environment
+scripts_dir="/mnt/scripts/"
+sudo mkdir -p ${scripts_dir}
+sudo cp -v ${root_dir}/construct_rootfs.sh ${scripts_dir}
+# Mount necessary fs
+sudo mount -t proc /proc /mnt/proc
+sudo mount -t sysfs /sys /mnt/sys
+sudo mount -o bind /dev /mnt/dev
+sudo mount -o bind /dev/pts /mnt/dev/pts
+# chroot!
+sudo LC_ALL=C chroot /mnt /bin/bash /scripts/construct_rootfs.sh
+# Clean up
 sudo rm /mnt/usr/bin/qemu-arm-static
+sudo umount /mnt/proc
+sudo umount /mnt/sys
+sudo umount /mnt/dev/pts
+sudo umount /mnt/dev
 sudo umount /mnt
 
 cd ${root_dir}
