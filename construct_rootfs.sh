@@ -24,7 +24,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
   bash-completion \
   kmod \
   linux-firmware \
-  emacs24-nox
+  emacs24-nox \
+  file
 
 dpkg-reconfigure resolvconf
 dpkg-reconfigure tzdata
