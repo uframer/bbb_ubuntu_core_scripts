@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This script is designed to construct a bootable ubnutu core system on SD card for Beaglebone Black.
+
 root_dir=$PWD
 
 if [ $# != "2" ] ; then
@@ -7,7 +9,9 @@ if [ $# != "2" ] ; then
     exit 1
 fi
 
+# workspace
 target_dir=$1
+# device file for SD card
 target_device=$2
 
 mkdir -p ${target_dir}
@@ -144,7 +148,7 @@ sudo mkfs.ext4 ${target_device}1 -L PiggySting
 
 sudo umount ${target_device}1
 
-# Write U-Boot as raw mode
+# Install U-Boot as raw mode
 sudo dd if=MLO of=${target_device} bs=512 seek=256 count=256 conv=notrunc
 sudo dd if=u-boot.img of=${target_device} bs=512 seek=768 count=1024 conv=notrunc
 sudo blockdev --flushbufs ${target_device}
@@ -155,6 +159,7 @@ sudo mount ${target_device}1 /mnt
 sudo mkdir -p /mnt/boot
 sudo cp -v ${target_dir}/MLO /mnt/boot/
 sudo cp -v ${target_dir}/u-boot.img /mnt/boot/
+sudo echo ${kernel_version} > /mnt/boot/kernel_version
 # TODO setup uEnv.txt
 # With u-boot v2014.07 and the corresponding patches from Robert Nelson, each partition
 # of the SD card will be searched for an environment file under /boot/uEnv.txt. If an
@@ -185,17 +190,21 @@ sudo tar zxvpf ${target_dir}/${ubuntu_core_dir}/${rootfs_archive} -C /mnt
 sudo sh -c "echo '/dev/mmcblk0p1  /  auto  errors=remount-ro  0  1' >> /mnt/etc/fstab"
 # Configure serial
 sudo cp -v ${root_dir}/serial.conf /mnt/etc/init/serial.conf
-# Configure network interfaces
-#sudo cp -v ${root_dir}/interfaces /mnt/etc/network/
+
 # We need qemu-arm-static to run armhf rootfs via binfmt_misc
 sudo cp -v /usr/bin/qemu-arm-static /mnt/usr/bin/
 # Copy host's dns configuration to target
 sudo cp -b /etc/resolv.conf /mnt/etc/resolv.conf
 # Prepare scripts to run in chroot environment
-scripts_dir="/mnt/scripts/"
+scripts_dir="/mnt/opt/scripts/"
 sudo mkdir -p ${scripts_dir}
 sudo cp -v ${root_dir}/construct_rootfs.sh ${scripts_dir}
 sudo cp -v ${root_dir}/package.list ${scripts_dir}
+sudo cp -v ${root_dir}/replicate.sh ${scripts_dir}
+sudo chmod u+x ${scripts_dir}/replicate.sh
+sudo cp -v ${target_dir}/${linux_builder_script}/deploy/${kernel_version}-dtbs.tar.gz ${scripts_dir}
+sudo cp -v ${target_dir}/${linux_builder_script}/deploy/${kernel_version}-modules.tar.gz ${scripts_dir}
+sudo cp -v ${target_dir}/${ubuntu_core_dir}/${rootfs_archive} ${scripts_dir}/rootfs.tar.gz
 # Mount necessary fs
 sudo mount -t proc /proc /mnt/proc
 sudo mount -t sysfs /sys /mnt/sys
@@ -212,3 +221,4 @@ sudo umount /mnt/dev
 sudo umount /mnt
 
 cd ${root_dir}
+

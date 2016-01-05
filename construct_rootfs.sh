@@ -12,7 +12,7 @@ echo "apt-get update"
 apt-get update
 while read package_name ; do
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ${package_name}
-done < /scripts/package.list
+done < /opt/scripts/package.list
 
 dpkg-reconfigure resolvconf
 dpkg-reconfigure tzdata
@@ -23,3 +23,4 @@ echo "127.0.0.1    localhost" > /etc/hosts
 echo "127.0.0.1    station001.piggysting" >> /etc/hosts
 
 exit
+
