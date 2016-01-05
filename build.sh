@@ -195,6 +195,7 @@ sudo cp -b /etc/resolv.conf /mnt/etc/resolv.conf
 scripts_dir="/mnt/scripts/"
 sudo mkdir -p ${scripts_dir}
 sudo cp -v ${root_dir}/construct_rootfs.sh ${scripts_dir}
+sudo cp -v ${root_dir}/package.list ${scripts_dir}
 # Mount necessary fs
 sudo mount -t proc /proc /mnt/proc
 sudo mount -t sysfs /sys /mnt/sys

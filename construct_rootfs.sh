@@ -10,22 +10,9 @@ passwd root
 # Install packages
 echo "apt-get update"
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
-  language-pack-en-base \
-  sudo \
-  ssh \
-  net-tools \
-  ethtool \
-  wireless-tools \
-  ifupdown \
-  network-manager \
-  iputils-ping \
-  rsyslog \
-  bash-completion \
-  kmod \
-  linux-firmware \
-  emacs24-nox \
-  file
+while read package_name ; do
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ${package_name}
+done < /scripts/package.list
 
 dpkg-reconfigure resolvconf
 dpkg-reconfigure tzdata
