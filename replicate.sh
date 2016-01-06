@@ -68,7 +68,11 @@ mount ${target_partition} /mnt
 
 # Copy system rootfs
 rsync -aAx /* /mnt/ --exclude={/dev/*,/proc/*,/sys/*,/tmp/*,/run/*,/mnt/*,/media/*,/lost+found}
+
+if [ -d /mnt/etc/ssh/ ] ; then
+    touch /mnt/etc/ssh/ssh.regenerate
+fi
+
 sync
 blockdev --flushbufs ${target_device}
 echo "Replication done. Please unplug the SD card if necessary then reboot."
-

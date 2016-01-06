@@ -97,7 +97,7 @@ else
   echo "Linux kernel was built before, skip this phase"
 fi
 
-# Export kernel version, we need this to copy kernel files later. 
+# Export kernel version, we need this to copy kernel files later.
 unset kernel_version
 kernel_version=`cat kernel_version`
 echo "kernel_version=${kernel_version}"
@@ -215,7 +215,7 @@ sudo cp -b /etc/resolv.conf /mnt/etc/resolv.conf
 # Prepare scripts to run in chroot environment
 scripts_dir="/opt/scripts/"
 target_scripts_dir=/mnt${scripts_dir}
-sudo mkdir -p ${scripts_dir}
+sudo mkdir -p ${target_scripts_dir}
 sudo cp -v ${root_dir}/construct_rootfs.sh ${target_scripts_dir}
 sudo cp -v ${root_dir}/package.list ${target_scripts_dir}
 sudo cp -v ${root_dir}/replicate.sh ${target_scripts_dir}
@@ -236,4 +236,3 @@ sudo umount /mnt/dev
 sudo umount /mnt
 
 cd ${root_dir}
-
