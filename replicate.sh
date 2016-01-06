@@ -73,6 +73,22 @@ if [ -d /mnt/etc/ssh/ ] ; then
     touch /mnt/etc/ssh/ssh.regenerate
 fi
 
+root_uuid=$(/sbin/blkid -c /dev/null -s UUID -o value ${target_device}p1)
+if [ "${root_uuid}" ] ; then
+    sed -i -e 's:uuid=:#uuid=:g' /mnt/boot/uEnv.txt
+    echo "uuid=${root_uuid}" >> /mnt/boot/uEnv.txt
+
+    root_uuid="UUID=${root_uuid}"
+else
+    echo "Failed to get root_uuid"
+    exit 1
+fi
+
+echo "args_mmc_old=setenv bootargs console=\${console} \${optargs} \${cape_disable} \${cape_enable} root=/dev/mmcblk0p1 ro rootfstype=\${mmcrootfstype} \${cmdline}" >> /mnt/boot/uEnv.txt
+
+echo "${root_uuid}  /  ext4  noatime,errors=remount-ro  0  1" > /mnt/etc/fstab
+echo "debugfs  /sys/kernel/debug  debugfs  defaults  0  0" >> /mnt/etc/fstab
+
 sync
 blockdev --flushbufs ${target_device}
 echo "Replication done. Please unplug the SD card if necessary then reboot."
