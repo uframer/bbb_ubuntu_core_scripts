@@ -109,11 +109,11 @@ ubuntu_core_dir=ubuntu_core_dir
 mkdir -p ${ubuntu_core_dir}
 cd ${ubuntu_core_dir}
 # 15.04 is currently the highest available armhf Ubuntu Core release.
-#rootfs_archive="ubuntu-core-15.04-core-armhf.tar.gz"
-#rootfs_url_prefix="http://cdimage.ubuntu.com/ubuntu-core/releases/15.04/release/"
+rootfs_archive="ubuntu-core-15.04-core-armhf.tar.gz"
+rootfs_url_prefix="http://cdimage.ubuntu.com/ubuntu-core/releases/15.04/release/"
 # 14.04 LTS is the only suppored release of ROS
-rootfs_archive="ubuntu-core-14.04-core-armhf.tar.gz"
-rootfs_url_prefix="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04.3/release/"
+#rootfs_archive="ubuntu-core-14.04-core-armhf.tar.gz"
+#rootfs_url_prefix="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04.3/release/"
 if [ ! -f ${rootfs_archive} ] ; then
     wget ${rootfs_url_prefix}/SHA1SUMS
     wget ${rootfs_url_prefix}/${rootfs_archive}
