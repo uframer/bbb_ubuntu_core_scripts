@@ -9,20 +9,21 @@ if [ $# != "2" ] ; then
     exit 1
 fi
 
-# workspace
+# Workspace
 target_dir=$1
-# device file for SD card
+# Device file for SD card
 target_device=$2
 
 mkdir -p ${target_dir}
 cd ${target_dir}
+# Use absolute path of target_dir
 target_dir=$PWD
 
 # TODO: check target device
-# 1. check existence
-# 2. check if it is current rootfs
+# check if it is current rootfs
 
 # Use my fork from Robert Nelson's script to build u-boot
+# My fork added the ability to specify target board on command line.
 cd ${target_dir}
 uboot_builder_script=uboot_builder_script
 if [ -d ${uboot_builder_script} ] ; then
@@ -46,7 +47,7 @@ fi
 cp -f deploy/am335x_boneblack/MLO-am335x_boneblack-v2015.10-r12 ${target_dir}/MLO
 cp -f deploy/am335x_boneblack/u-boot-am335x_boneblack-v2015.10-r12.img ${target_dir}/u-boot.img
 
-# Clone Linus's Linux kernel repository
+# Clone Linus's Linux kernel repository to try to save some loading for repetitive compilation.
 torvalds_linux="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git"
 local_linux_source="${HOME}/linux-src/"
 if [ ! -f "${local_linux_source}/.git/config" ] ; then
@@ -66,6 +67,7 @@ else
 fi
 
 # Checkout v4.3.x branch
+# v4.3.x is the highest stable kernel version currently, we may update this as the kernel evolve.
 git branch -d build
 git checkout remotes/origin/v4.3.x -b build
 
@@ -95,6 +97,7 @@ else
   echo "Linux kernel was built before, skip this phase"
 fi
 
+# Export kernel version, we need this to copy kernel files later. 
 unset kernel_version
 kernel_version=`cat kernel_version`
 echo "kernel_version=${kernel_version}"
@@ -105,6 +108,7 @@ cd ${target_dir}
 ubuntu_core_dir=ubuntu_core_dir
 mkdir -p ${ubuntu_core_dir}
 cd ${ubuntu_core_dir}
+# 15.04 is currently the highest available armhf Ubuntu Core release.
 rootfs_archive="ubuntu-core-15.04-core-armhf.tar.gz"
 if [ ! -f ${rootfs_archive} ] ; then
     wget http://cdimage.ubuntu.com/ubuntu-core/releases/15.04/release/SHA1SUMS
@@ -127,17 +131,30 @@ fi
 
 sudo umount ${target_device}1
 
-# Clear the first 32M
+# Clear the first 32M defensively
 sudo dd if=/dev/zero of=${target_device} bs=1M count=32
 if [ $? != "0" ] ; then
     echo "erasing failed"
     exit 1
 fi
 
+# Check sfdisk's version
+sfdisk_old_version=0
+sfdisk --help | grep -m 1 -e "--in-order" > /dev/null && sfdisk_old_version=1
 # Make the entire disk a Linux partition
-sudo sfdisk --in-order --Linux --unit M ${target_device} <<-__EOF__
+if [ $sfdisk_old_version == "1" ] ; then
+
+sudo sfdisk --force --in-order --Linux --unit M ${target_device} <<-__EOF__
 1,,L,*
 __EOF__
+
+else
+
+sudo sfdisk --force ${target_device} <<-__EOF__
+1M,,L,*
+__EOF__
+
+fi
 
 if [ $? != "0" ] ; then
     echo "sfdisk failed"
@@ -155,12 +172,11 @@ sudo blockdev --flushbufs ${target_device}
 
 ## Mount target device
 sudo mount ${target_device}1 /mnt
-# Install u-boot
+# Copy u-boot to /boot
 sudo mkdir -p /mnt/boot
 sudo cp -v ${target_dir}/MLO /mnt/boot/
 sudo cp -v ${target_dir}/u-boot.img /mnt/boot/
 sudo echo ${kernel_version} > /mnt/boot/kernel_version
-# TODO setup uEnv.txt
 # With u-boot v2014.07 and the corresponding patches from Robert Nelson, each partition
 # of the SD card will be searched for an environment file under /boot/uEnv.txt. If an
 # uEnv.txt file is found, its contents are imported.
@@ -187,7 +203,8 @@ sudo tar xfv ${target_dir}/${linux_builder_script}/deploy/${kernel_version}-modu
 # Install Ubuntu Core rootfs
 sudo tar zxvpf ${target_dir}/${ubuntu_core_dir}/${rootfs_archive} -C /mnt
 # Configure fstab
-sudo sh -c "echo '/dev/mmcblk0p1  /  auto  errors=remount-ro  0  1' >> /mnt/etc/fstab"
+# Set noatime to reduce disk IO and extend eMMC's lifetime
+sudo sh -c "echo '/dev/mmcblk0p1  /  ext4  noatime,errors=remount-ro  0  1' >> /mnt/etc/fstab"
 # Configure serial
 sudo cp -v ${root_dir}/serial.conf /mnt/etc/init/serial.conf
 
@@ -196,15 +213,13 @@ sudo cp -v /usr/bin/qemu-arm-static /mnt/usr/bin/
 # Copy host's dns configuration to target
 sudo cp -b /etc/resolv.conf /mnt/etc/resolv.conf
 # Prepare scripts to run in chroot environment
-scripts_dir="/mnt/opt/scripts/"
+scripts_dir="/opt/scripts/"
+target_scripts_dir=/mnt${scripts_dir}
 sudo mkdir -p ${scripts_dir}
-sudo cp -v ${root_dir}/construct_rootfs.sh ${scripts_dir}
-sudo cp -v ${root_dir}/package.list ${scripts_dir}
-sudo cp -v ${root_dir}/replicate.sh ${scripts_dir}
-sudo chmod u+x ${scripts_dir}/replicate.sh
-sudo cp -v ${target_dir}/${linux_builder_script}/deploy/${kernel_version}-dtbs.tar.gz ${scripts_dir}
-sudo cp -v ${target_dir}/${linux_builder_script}/deploy/${kernel_version}-modules.tar.gz ${scripts_dir}
-sudo cp -v ${target_dir}/${ubuntu_core_dir}/${rootfs_archive} ${scripts_dir}/rootfs.tar.gz
+sudo cp -v ${root_dir}/construct_rootfs.sh ${target_scripts_dir}
+sudo cp -v ${root_dir}/package.list ${target_scripts_dir}
+sudo cp -v ${root_dir}/replicate.sh ${target_scripts_dir}
+sudo chmod u+x ${target_scripts_dir}/replicate.sh
 # Mount necessary fs
 sudo mount -t proc /proc /mnt/proc
 sudo mount -t sysfs /sys /mnt/sys
