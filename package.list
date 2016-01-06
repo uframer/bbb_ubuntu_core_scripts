@@ -14,6 +14,6 @@ linux-firmware
 nano
 file
 build-essential
-nano
+ca-certificates
 git
 python
