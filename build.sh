@@ -214,7 +214,7 @@ sudo cp -v /usr/bin/qemu-arm-static /mnt/usr/bin/
 sudo cp -b /etc/resolv.conf /mnt/etc/resolv.conf
 # Prepare scripts to run in chroot environment
 scripts_dir="/opt/scripts/"
-target_scripts_dir=/mnt${scripts_dir}
+target_scripts_dir=/mnt/${scripts_dir}
 sudo mkdir -p ${target_scripts_dir}
 sudo cp -v ${root_dir}/construct_rootfs.sh ${target_scripts_dir}
 sudo cp -v ${root_dir}/package.list ${target_scripts_dir}
@@ -226,7 +226,7 @@ sudo mount -t sysfs /sys /mnt/sys
 sudo mount -o bind /dev /mnt/dev
 sudo mount -o bind /dev/pts /mnt/dev/pts
 # chroot!
-sudo LC_ALL=C chroot /mnt /bin/bash /scripts/construct_rootfs.sh
+sudo LC_ALL=C chroot /mnt /bin/bash ${scripts_dir}/construct_rootfs.sh
 # Clean up
 sudo rm /mnt/usr/bin/qemu-arm-static
 sudo umount /mnt/proc
