@@ -2,7 +2,7 @@
 
 current_user=`whoami`
 
-if [ ${current_user} !== "root" ] ; then
+if [ ${current_user} != "root" ] ; then
     echo "Please run this script as root"
     exit 1
 fi
