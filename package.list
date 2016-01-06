@@ -17,3 +17,5 @@ build-essential
 ca-certificates
 git
 python
+rsync
+
