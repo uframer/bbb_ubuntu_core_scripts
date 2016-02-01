@@ -112,11 +112,12 @@ cd ${ubuntu_core_dir}
 rootfs_archive="ubuntu-core-14.04-core-armhf.tar.gz"
 rootfs_url_prefix="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04.3/release/"
 if [ ! -f ${rootfs_archive} ] ; then
-    wget ${rootfs_url_prefix}/SHA1SUMS
     wget ${rootfs_url_prefix}/${rootfs_archive}
 fi
 # Check SHA1
-grep armhf SHA1SUMS | sha1sum -c
+rm SHA1SUMS*
+wget ${rootfs_url_prefix}/SHA1SUMS
+grep "${rootfs_archive}" SHA1SUMS | sha1sum -c
 if [ $? != "0" ] ; then
     echo "rootfs verification failed, please delete intermediate file and retry"
     exit 1
