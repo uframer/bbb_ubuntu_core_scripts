@@ -9,6 +9,7 @@ if [ $# != "2" ] ; then
     exit 1
 fi
 
+echo "====Prepare Workspace===="
 # Workspace
 target_dir=$1
 # Device file for SD card
@@ -22,6 +23,7 @@ target_dir=$PWD
 # TODO: check target device
 # check if it is current rootfs
 
+echo "====Build U-Boot===="
 # Use my fork from Robert Nelson's script to build u-boot
 # My fork added the ability to specify target board on command line.
 cd ${target_dir}
@@ -35,18 +37,23 @@ else
 fi
 
 need_rebuild_uboot=0
-if [ ! -f deploy/am335x_boneblack/MLO-am335x_boneblack-v2015.10-r12 ] ; then
+# this version is defined in ${target_dir}/${uboot_builder_script}/tools/version.sh
+# the release code is defined by the "stable" RELEASE_VER of ${target_dir}/${uboot_builder_script}/build.sh
+target_uboot_version="v2016.03-r6"
+if [ ! -f deploy/am335x_boneblack/MLO-am335x_boneblack-${target_uboot_version} ] ; then
     need_rebuild_uboot=1
 fi
-if [ ! -f deploy/am335x_boneblack/u-boot-am335x_boneblack-v2015.10-r12.img ] ; then
+if [ ! -f deploy/am335x_boneblack/u-boot-am335x_boneblack-${target_uboot_version}.img ] ; then
     need_rebuild_uboot=1
 fi
 if [ ${need_rebuild_uboot} == "1" ] ; then
     ./build.sh am335x_boneblack_flasher
 fi
-cp -f deploy/am335x_boneblack/MLO-am335x_boneblack-v2015.10-r12 ${target_dir}/MLO
-cp -f deploy/am335x_boneblack/u-boot-am335x_boneblack-v2015.10-r12.img ${target_dir}/u-boot.img
+cp -f deploy/am335x_boneblack/MLO-am335x_boneblack-${target_uboot_version} ${target_dir}/MLO
+cp -f deploy/am335x_boneblack/u-boot-am335x_boneblack-${target_uboot_version}.img ${target_dir}/u-boot.img
 
+
+echo "====Build Linux Kernel===="
 # Clone Linus's Linux kernel repository to try to save some loading for repetitive compilation.
 torvalds_linux="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git"
 local_linux_source="${HOME}/linux-src/"
@@ -55,21 +62,24 @@ if [ ! -f "${local_linux_source}/.git/config" ] ; then
     git clone ${torvalds_linux} ${local_linux_source}
 fi
 
-# Use my fork from Robert Nelson's script to build Linux kernel
+# Use Robert Nelson's script to build Linux kernel
 cd ${target_dir}
 linux_builder_script=linux_builder_script
 if [ -d ${linux_builder_script} ] ; then
     cd ${linux_builder_script}
     git pull
 else
-    git clone https://github.com/uframer/armv7-multiplatform.git ${linux_builder_script}
+    git clone https://github.com/RobertCNelson/armv7-multiplatform.git ${linux_builder_script}
     cd ${linux_builder_script}
 fi
 
-# Checkout v4.3.x branch
-# v4.3.x is the highest stable kernel version currently, we may update this as the kernel evolve.
+# Checkout v4.5.x branch
+# v4.5.x is the highest stable kernel version currently, we may update this as the kernel evolve.
+# the version may be found by issuing "git branch -a" command in ${target_dir}/${linux_builder_script}
+# the latest stable version of linux kernel can be found at www.kernel.org
+git checkout master
 git branch -d build
-git checkout remotes/origin/v4.3.x -b build
+git checkout remotes/origin/v4.5.x -b build
 
 if [ -f kernel_version ] ; then
     kernel_version=`cat kernel_version`
@@ -103,17 +113,15 @@ kernel_version=`cat kernel_version`
 echo "kernel_version=${kernel_version}"
 export kernel_version
 
+echo "====Build Root FS===="
 # Download Ubuntu Core rootfs
 cd ${target_dir}
 ubuntu_core_dir=ubuntu_core_dir
 mkdir -p ${ubuntu_core_dir}
 cd ${ubuntu_core_dir}
-# 15.04 is currently the highest available armhf Ubuntu Core release.
-rootfs_archive="ubuntu-core-15.04-core-armhf.tar.gz"
-rootfs_url_prefix="http://cdimage.ubuntu.com/ubuntu-core/releases/15.04/release/"
-# 14.04 LTS is the only suppored release of ROS
-#rootfs_archive="ubuntu-core-14.04-core-armhf.tar.gz"
-#rootfs_url_prefix="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04.3/release/"
+# 16.04 is currently the highest available armhf Ubuntu Core release.
+rootfs_archive="ubuntu-core-16.04-core-armhf.tar.gz"
+rootfs_url_prefix="http://cdimage.ubuntu.com/ubuntu-core/releases/16.04/release/"
 if [ ! -f ${rootfs_archive} ] ; then
     wget ${rootfs_url_prefix}/SHA1SUMS
     wget ${rootfs_url_prefix}/${rootfs_archive}
