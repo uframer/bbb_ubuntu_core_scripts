@@ -1,4 +1,3 @@
-language-pack-en-base
 sudo
 ssh
 net-tools
@@ -19,3 +18,4 @@ git
 python
 rsync
 wget
+bzr
