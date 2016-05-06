@@ -135,13 +135,28 @@ fi
 
 # Prepare target disk
 cd ${target_dir}
-file ${target_device} | grep block
-if [ $? != "0" ] ; then
+if [ ! -f ${target_device} ] ; then
     echo "Target device ${target_device} does not exist"
     exit 1
 fi
 
-sudo umount ${target_device}1
+loop_device=/dev/loop7
+
+file ${target_device} | grep block
+if [ $? != "0" ] ; then
+    echo "Processing image file ${target_device}"
+    is_image_file=1
+    image_filename=${target_device}
+    target_device=${loop_device}
+    sudo losetup ${loop_device} ${image_filename}
+else
+    echo "Processing block device ${target_device}"
+    is_image_file=0
+fi
+
+if [ "${is_image_file}" == "0" ] ; then
+    sudo umount ${target_device}1
+fi
 
 # Clear the first 32M defensively
 sudo dd if=/dev/zero of=${target_device} bs=1M count=32
@@ -173,17 +188,23 @@ if [ $? != "0" ] ; then
     exit 1
 fi
 
-sudo mkfs.ext4 ${target_device}1 -L PiggySting
-
-sudo umount ${target_device}1
-
 # Install U-Boot as raw mode
 sudo dd if=MLO of=${target_device} bs=512 seek=256 count=256 conv=notrunc
 sudo dd if=u-boot.img of=${target_device} bs=512 seek=768 count=1024 conv=notrunc
 sudo blockdev --flushbufs ${target_device}
 
-## Mount target device
-sudo mount ${target_device}1 /mnt
+# make ext4 fs
+if [ "${is_image_file}" == "1" ] ; then
+    sudo losetup -d ${target_device}
+    # reloop, jump over 1M bytes to the first partition
+    sudo losetup -o$((2048*512)) ${loop_device} ${image_filename}
+    sudo mkfs.ext4 ${target_device} -L PiggySting
+    sudo mount ${target_device} /mnt
+else
+    sudo mkfs.ext4 ${target_device}1 -L PiggySting
+    sudo mount ${target_device}1 /mnt
+fi
+
 # Copy u-boot to /boot
 sudo mkdir -p /mnt/boot
 sudo cp -v ${target_dir}/MLO /mnt/boot/
@@ -246,5 +267,9 @@ sudo umount /mnt/sys
 sudo umount /mnt/dev/pts
 sudo umount /mnt/dev
 sudo umount /mnt
+
+if [ "${is_image_file}" == "1" ] ; then
+    sudo losetup -d ${target_device}
+fi
 
 cd ${root_dir}

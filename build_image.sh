@@ -27,10 +27,4 @@ else
     fi
 fi
 
-# use the last one to avoid conflicts
-loop_device=/dev/loop7
-sudo losetup ${loop_device} ${image_filename}
-
-./build.sh ${workspace} ${loop_device} 2>&1 | tee build.log
-
-sudo losetup -d ${loop_device}
+./build.sh ${workspace} $(readlink -f ${image_filename}) 2>&1 | tee build.log
